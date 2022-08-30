@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using LansUILib.ui.components;
 
 namespace LansUILib.ui
 {
@@ -23,56 +25,54 @@ namespace LansUILib.ui
 
     public class LComponent
     {
+        public delegate void LMouseEvent(MouseState state);
+
+        public event LMouseEvent MouseEnter;
+        public event LMouseEvent MouseExit;
+        public event LMouseEvent MouseDown;
+        public event LMouseEvent MouseUp;
+        public event LMouseEvent MouseMove;
+
+
+        public bool MouseInteraction = false;
+
+        public bool ContainsMouse(MouseState mouse) {
+            return layout.X <= mouse.x && mouse.x < layout.X + layout.Width && layout.Y <= mouse.y && mouse.y < layout.Y + layout.Height;
+        }
+
+        public void fireMouseEnter(MouseState state) { MouseEnter?.Invoke(state); }
+        public void fireMouseExit(MouseState state) { MouseExit?.Invoke(state); }
+        public void fireMouseDown(MouseState state) { MouseDown?.Invoke(state); }
+        public void fireMouseUp(MouseState state) { MouseUp?.Invoke(state); }
+        public void fireMouseMove(MouseState state) { MouseMove?.Invoke(state); }
+
+
         public static int MinX = 0;
         public static int MinY = 1;
         public static int MaxX = 2;
         public static int MaxY = 3;
         public static int SIDE_COUNT = 4;
 
-        protected float[] anchor = new float[SIDE_COUNT];
+        protected float[] anchor = new float[] {0,0,1,1};
         protected int[] margin = new int[SIDE_COUNT];
         protected float[] pivot = new float[2] {0.5f,0.5f};
 
         protected List<LComponent> children = new List<LComponent>();
 
-        protected ILayout layout;
+        protected Layout layout;
+        public LImage image;
+        public LImage border;
+        public bool isMask;
+        public string text;
+        public ILColor textColor;
 
         protected LComponent _parent = null;
         public string name;
+
         public LComponent(string name)
         {
-            SetLayout(ILayout.None());
+            SetLayout(Layout.None());
             this.name = name;
-        }
-
-        // used internaly to cache position and size
-        protected int _x = 0;
-        protected int _y = 0;
-        protected int _width = 0;
-        protected int _height = 0;
-
-        public virtual int X
-        {
-            get { return _x; }
-            set { _x = value; }
-        }
-
-        public virtual int Y
-        {
-            get { return _y; }
-            set { _y = value; }
-        }
-
-        public virtual int Width
-        {
-            get { return _width; }
-            set { _width = value; }
-        }
-
-        public virtual int Height
-        {
-            get { return _height; }
-            set { _height = value; }
         }
 
         public LComponent Parent
@@ -112,6 +112,8 @@ namespace LansUILib.ui
         public virtual void SetMargin(int side, int value)
         {
             margin[side] = value;
+
+            this.GetLayout().SetDirty();
         }
 
         public virtual int GetMargin(int side)
@@ -130,12 +132,19 @@ namespace LansUILib.ui
             margin[MinY] = minY;
             margin[MaxX] = maxX;
             margin[MaxY] = maxY;
+
+            this.GetLayout().SetDirty();
         }
 
-        public virtual void SetLayout(ILayout layout)
+        public virtual void SetLayout(Layout layout)
         {
             this.layout = layout;
             layout.SetComponentOwner(this);
+        }
+
+        public virtual Layout GetLayout()
+        {
+            return this.layout;
         }
 
         public virtual void SetAnchor(int side, float value)
@@ -145,6 +154,8 @@ namespace LansUILib.ui
                 throw new Exception("Value range is 0-1");
             }
             anchor[side] = value;
+
+            this.GetLayout().SetDirty();
         }
 
         public virtual void SetAnchors(float minX, float minY, float maxX, float maxY)
@@ -153,6 +164,8 @@ namespace LansUILib.ui
             anchor[MinY] = minY;
             anchor[MaxX] = maxX;
             anchor[MaxY] = maxY;
+
+            this.GetLayout().SetDirty();
         }
 
         public virtual float GetAnchor(int side)
@@ -246,6 +259,8 @@ namespace LansUILib.ui
             margin[MinY] = minY;
             margin[MaxX] = maxX;
             margin[MaxY] = maxY;
+
+            this.GetLayout().SetDirty();
         }
 
         public virtual void SetSize(int x, int y, int width, int height)
@@ -259,6 +274,98 @@ namespace LansUILib.ui
             margin[MinY] = y;
             margin[MaxX] = -x-width;
             margin[MaxY] = -y-height;
+
+            this.GetLayout().SetDirty();
+        }
+
+        public virtual int[] GetSize()
+        {
+            if (anchor[MinX] != anchor[MaxX] || anchor[MinY] != anchor[MaxY])
+            {
+                throw new Exception("Size only works correctly if you have anchored to the same (MinX/MaxX and MinY/MaxY). Set that first!");
+            }
+
+            var x = margin[MinX];
+            var y = margin[MinY];
+            var width = -margin[MaxX]-x;
+            var height = -margin[MaxY]-y;
+
+            return new int[] { x, y, width, height };
+        }
+
+        public virtual void Move(int deltaX, int deltaY, bool safe = true)
+        {
+            if (anchor[MinX] != anchor[MaxX] || anchor[MinY] != anchor[MaxY])
+            {
+                throw new Exception("Size only works correctly if you have anchored to the same (MinX/MaxX and MinY/MaxY). Set that first!");
+            }
+
+            if(safe)
+            {
+                if(this.Parent == null)
+                {
+                    return;
+                }
+
+                var paddingLeft = this.layout.X + this.Parent.layout.X;
+                var paddingRight = this.Parent.layout.Width -this.layout.Width -paddingLeft;
+                if(paddingLeft + deltaX < 0)
+                {
+                    deltaX = -paddingLeft;
+                }
+                if (paddingRight - deltaX < 0)
+                {
+                    deltaX = paddingRight;
+                }
+
+                var paddingTop = this.layout.Y + this.Parent.layout.Y;
+                var paddingBottom = this.Parent.layout.Height - this.layout.Height - paddingTop;
+
+                if (paddingTop + deltaY < 0)
+                {
+                    deltaY = -paddingTop;
+                }
+                if (paddingBottom - deltaY < 0)
+                {
+                    deltaY = paddingBottom;
+                }
+            }
+
+
+            margin[MinX] = margin[MinX] + deltaX;
+            margin[MinY] = margin[MinY] + deltaY;
+            margin[MaxX] = margin[MaxX] - deltaX;
+            margin[MaxY] = margin[MaxY] - deltaY;
+
+
+            this.GetLayout().SetDirty();
+        }
+
+        public virtual void Resize(int deltaX, int deltaY, bool safe = true)
+        {
+            if (anchor[MinX] != anchor[MaxX] || anchor[MinY] != anchor[MaxY])
+            {
+                throw new Exception("Size only works correctly if you have anchored to the same (MinX/MaxX and MinY/MaxY). Set that first!");
+            }
+
+            if(safe)
+            {
+                if(this.layout.Width +deltaX < 30)
+                {
+                    deltaX = -(this.layout.Width - 30);
+                }
+                if (this.layout.Height + deltaY < 30)
+                {
+                    deltaY = -(this.layout.Height - 30);
+                }
+            }
+
+            margin[MinX] = margin[MinX];
+            margin[MinY] = margin[MinY];
+            margin[MaxX] = margin[MaxX] - deltaX;
+            margin[MaxY] = margin[MaxY] - deltaY;
+
+            this.GetLayout().SetDirty();
         }
 
 
@@ -268,24 +375,6 @@ namespace LansUILib.ui
             {
                 this.Parent.Invalidate();
             }
-            else
-            {
-                this.Recalculate();
-            }
         }
-
-        public virtual void Recalculate()
-        {
-            
-            this.layout.Calculate();
-            if (!this.layout.ControlsChildren())
-            {
-                foreach (var child in children)
-                {
-                    child.Recalculate();
-                }
-            }
-        }
-
     }
 }

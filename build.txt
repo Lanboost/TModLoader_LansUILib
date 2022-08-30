@@ -1,5 +1,5 @@
 displayName = Lan's UI Lib (Library only)
 author = Lanboost
-version = 2022.08.01
+version = 2022.08.29
 includePDB = true
 includeSource = true

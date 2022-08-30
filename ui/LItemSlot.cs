@@ -31,11 +31,19 @@ namespace LansUILib.ui
             return arr;
         }
 
-        public static void Load(TagCompound tag, string name, ref LItemSlot[] items)
+        public static void Load(TagCompound tag, string name, ref LItemSlot[] items, LItemSlotType lItemSlotType = LItemSlotType.Item)
         {
             var arr = tag.GetList<TagCompound>(name).Select(ItemIO.Load).ToArray();
+            if(items.Length != arr.Length)
+            {
+                items = new LItemSlot[arr.Length];
+            }
             for(int i=0; i<arr.Length; i++)
             {
+                if(items[i] == null)
+                {
+                    items[i] = new LItemSlot(lItemSlotType);
+                }
                 items[i].Item = arr[i];
             }
         }
@@ -52,6 +60,7 @@ namespace LansUILib.ui
         public LItemSlot(LItemSlotType type)
         {
             this.type = type;
+            
         }
 
         public Item _item = new Item();
@@ -60,8 +69,12 @@ namespace LansUILib.ui
         {
             get { return _item; }
             set { 
-                _item = value; 
-                OnChanged.Invoke();
+                _item = value;
+                if (!value.IsAir)
+                {
+                    Main.instance.LoadItem(value.type);
+                }
+                OnChanged?.Invoke();
             }
         }
 
@@ -79,6 +92,20 @@ namespace LansUILib.ui
                 Main.LocalPlayer.UpdatePetLight(Main.myPlayer);
                 Utils.Swap(ref Main.LocalPlayer.miscEquips[1], ref _item);
             }
+        }
+    }
+
+    public class LItemSlotSerializer : TagSerializer<LItemSlot, TagCompound>
+    {
+        public override TagCompound Serialize(LItemSlot value) {
+            return ItemIO.Save(value.Item);
+    }
+
+        public override LItemSlot Deserialize(TagCompound tag)
+        {
+            var slot = new LItemSlot(LItemSlotType.Item);
+            slot.Item = ItemIO.Load(tag);
+            return slot;
         }
     }
 }

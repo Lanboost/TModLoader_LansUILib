@@ -8,6 +8,7 @@ using Terraria.UI;
 
 namespace LansUILib.ui
 {
+    /*
     public class WrapperComponent:LComponent 
     {
         public List<Func<bool>> allDelegates = new List<Func<bool>>();
@@ -108,5 +109,5 @@ namespace LansUILib.ui
                 allDelegates.AddRange(wrapperComponentChild.allDelegates);
             }
         }
-    }
+    }*/
 }

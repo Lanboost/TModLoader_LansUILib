@@ -191,7 +191,7 @@ namespace LansUILib.ui
 
         private void UpdateScrollbar()
         {
-            Scrollbar?.SetView(Height.Pixels, contentPanel.Height);
+            Scrollbar?.SetView(Height.Pixels, contentPanel.GetLayout().Height);
         }
 
     }

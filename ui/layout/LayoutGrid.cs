@@ -11,11 +11,10 @@ namespace LansUILib.ui
 		Columns,
 		Rows
 	}
-    public class LayoutGrid : ILayout
+    public class LayoutGrid : Layout
     {
 		
 
-		LComponent component = null;
 		LayoutGridType layoutType;
         int columnsOrRows;
 		int[] padding = new int[4];
@@ -39,16 +38,9 @@ namespace LansUILib.ui
 
         }
 
-		public void SetComponentOwner(LComponent component)
-		{
-			this.component = component;
-		}
-
 		public void SetColumnsOrRowsCount(int count)
 		{
-
 			this.columnsOrRows = count;
-
         }
 
 		public void SetPadding(int paddingLeft = 0, int paddingTop = 0, int paddingRight = 0, int paddingBottom = 0, int spacing = 0)
@@ -60,63 +52,114 @@ namespace LansUILib.ui
             this.spacing = spacing;
         }
 
-		public void Calculate()
-        {
-			ILayout.CalculateDefaultSize(this.component);
-
-			var childCount = component.Children.Count();
+		protected int[][][] GetColumnAndRowSizes()
+		{
+            var childCount = component.Children.Count();
 
             int columns = columnsOrRows;
-			int rows = (childCount+ columnsOrRows-1) / columnsOrRows;
-			if(layoutType == LayoutGridType.Rows)
-			{
+            int rows = (childCount + columnsOrRows - 1) / columnsOrRows;
+            if (layoutType == LayoutGridType.Rows)
+            {
                 var temp = columns;
-				columns = rows;
-				rows = temp;
+                columns = rows;
+                rows = temp;
             }
 
 
             int[] columnWidth = new int[columns];
-			int[] rowHeight = new int[rows];
+            int[] columnFlex = new int[columns];
+            int[] rowHeight = new int[rows];
+            int[] rowFlex = new int[rows];
+            int[][] prefChildSize = new int[component.Children.Count()][];
 
-			int index = 0;
-			foreach (var c in component.Children)
-			{
-                c.Recalculate();
-				var cColumn = index % columns;
-				var cRow = index / columns;
-
-				columnWidth[cColumn] = Math.Max(columnWidth[cColumn], c.Width);
-				rowHeight[cRow] = Math.Max(rowHeight[cRow], c.Height);
-
-				index++;
-            }
-
-
-            int cx = padding[0] + this.component.X;
-            int cy = padding[1] + this.component.Y;
-
-            index = 0;
+            int index = 0;
             foreach (var c in component.Children)
             {
+                var prefSize = c.GetLayout().GetPrefferedSize();
                 var cColumn = index % columns;
                 var cRow = index / columns;
 
+                columnWidth[cColumn] = Math.Max(columnWidth[cColumn], prefSize[0]);
+                columnFlex[cColumn] = Math.Max(columnFlex[cColumn], c.GetLayout().Flex);
+                rowHeight[cRow] = Math.Max(rowHeight[cRow], prefSize[1]);
+                rowFlex[cRow] = Math.Max(rowFlex[cRow], c.GetLayout().Flex);
+                prefChildSize[index] = prefSize;
+                index++;
+            }
+
+            return new int[][][] { new int[][] { columnWidth, rowHeight, columnFlex, rowFlex }, prefChildSize };
+        }
+
+		public override void Update()
+        {
+            base.Update();
+
+            var columnAndRows = GetColumnAndRowSizes();
+
+
+            int[] columnWidth = columnAndRows[0][0];
+            int[] rowHeight = columnAndRows[0][1];
+            int[] columnFlex = columnAndRows[0][2];
+            int[] rowFlex = columnAndRows[0][3];
+            int[][] childPrefSize = columnAndRows[1];
+
+            var newWidth = columnWidth.Sum() + (columnWidth.Count() - 1) * spacing + padding[0] + padding[2];
+            var newHeight = rowHeight.Sum() + (rowHeight.Count() - 1) * spacing + padding[1] + padding[3];
+            if (!this.component.Parent.GetLayout().ControlsChildren())
+            {
+                if (fitSizeToChildren[0])
+                {
+                    var diff = newWidth - this.Width;
+                    this.X -= (int)(diff * component.GetPivot(0));
+                    this.Width = newWidth;
+                }
+                if (fitSizeToChildren[1])
+                {
+                    var diff = newHeight - this.Height;
+                    this.Y -= (int)(diff * component.GetPivot(1));
+                    this.Height = newHeight;
+                }
+            }
+
+            var diffX = Math.Max(this.Width-newWidth,0);
+            var diffY = Math.Max(this.Height-newHeight,0);
+            var flexX = Math.Max(1,columnFlex.Sum());
+            var flexY = Math.Max(1, rowFlex.Sum());
+
+
+
+            int cx = padding[0] + this.X;
+            int cy = padding[1] + this.Y;
+
+            var index = 0;
+            foreach (var c in component.Children)
+            {
+                var cColumn = index % columnWidth.Length;
+                var cRow = index / columnWidth.Length;
+
                 if (expandChildren[0])
                 {
-					c.Width = columnWidth[cColumn];
+					c.GetLayout().Width = columnWidth[cColumn] + (int) (diffX * ((float)columnFlex[cColumn]/ flexX));
+                }
+                else
+                {
+                    c.GetLayout().Width = childPrefSize[index][0];
                 }
 				if(expandChildren[1])
 				{
-                    c.Height = rowHeight[cRow];
+                    c.GetLayout().Height = rowHeight[cRow] + (int)(diffY * ((float)rowFlex[cRow] / flexY));
+                }
+                else
+                {
+                    c.GetLayout().Height = childPrefSize[index][1];
                 }
 
-				c.X = cx;
-                c.Y = cy;
+                c.GetLayout().X = cx;
+                c.GetLayout().Y = cy;
 
-				if (cColumn == columns - 1)
+				if (cColumn == columnWidth.Length - 1)
 				{
-					cx = padding[0] + this.component.X;
+					cx = padding[0] + this.X;
 					cy += rowHeight[cRow] + spacing;
 				}
 				else
@@ -126,26 +169,33 @@ namespace LansUILib.ui
 
                 index++;
             }
-
-			if (fitSizeToChildren[0])
-			{
-				var newWidth = columnWidth.Sum() + (columnWidth.Count() - 1) * spacing + padding[0] + padding[2];
-				var diff = newWidth - component.Width;
-                component.X -= (int)(diff*component.GetPivot(0));
-                component.Width = newWidth;
-            }
-			if(fitSizeToChildren[1])
-			{
-                var newHeight = rowHeight.Sum() + (rowHeight.Count() - 1) * spacing + padding[1] + padding[3];
-                var diff = newHeight - component.Height;
-                component.Y -= (int)(diff * component.GetPivot(1));
-                component.Height = newHeight;
-            }
+            
+            this.Refresh();
         }
 
-		public bool ControlsChildren()
+		public override bool ControlsChildren()
 		{
 			return true;
 		}
+
+        public override int[] GetPrefferedSize()
+        {
+            var columnAndRows = GetColumnAndRowSizes();
+            int[] columnWidth = columnAndRows[0][0];
+            int[] rowHeight = columnAndRows[0][1];
+
+            var newWidth = 0;
+            if (fitSizeToChildren[0])
+            {
+                newWidth = columnWidth.Sum() + (columnWidth.Count() - 1) * spacing + padding[0] + padding[2];
+            }
+            var newHeight = 0;
+            if (fitSizeToChildren[1])
+            {
+                newHeight = rowHeight.Sum() + (rowHeight.Count() - 1) * spacing + padding[1] + padding[3];
+            }
+
+            return new int[] { newWidth, newHeight };
+        }
     }
 }
