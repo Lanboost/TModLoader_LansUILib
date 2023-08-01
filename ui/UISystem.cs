@@ -15,7 +15,6 @@ using Terraria;
 using Terraria.GameContent.UI.Elements;
 using Terraria.ModLoader;
 using Terraria.UI;
-using static MonoMod.Cil.RuntimeILReferenceBag.FastDelegateInvokers;
 
 namespace LansUILib
 {
@@ -109,10 +108,10 @@ namespace LansUILib
 
 
 
-                IL.Terraria.Main.DrawCursor += AddCursorHandlerDrawCursor;
-                IL.Terraria.Main.DrawThickCursor += AddCursorHandlerDrawThickCursor;
+                Terraria.IL_Main.DrawCursor += AddCursorHandlerDrawCursor;
+                Terraria.IL_Main.DrawThickCursor += AddCursorHandlerDrawThickCursor;
                 //IL.Terraria.Main.DrawInventory += StartOfInterfaces;
-                IL.Terraria.UI.GameInterfaceLayer.Draw += StartOfInterfaces;
+                Terraria.UI.IL_GameInterfaceLayer.Draw += StartOfInterfaces;
             }
 
         }

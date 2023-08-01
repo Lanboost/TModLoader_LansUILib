@@ -58,7 +58,7 @@ namespace LansUILib.ui.elements
             }
         }
 
-        public override void Click(UIMouseEvent evt)
+        public override void LeftClick(UIMouseEvent evt)
         {
             Main.clrInput();
             Focused = true;
