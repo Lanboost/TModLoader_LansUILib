@@ -7,6 +7,7 @@ using MonoMod.Cil;
 using ReLogic.Content;
 using System;
 using System.Collections.Generic;
+using System.Drawing.Printing;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -30,7 +31,7 @@ namespace LansUILib
         public Asset<Texture2D> cursor = null;
         public Vector2 cursorOffset = new Vector2(0,0);
 
-
+        private static bool ilhookscreated = false;
         private static UISystem _instance = null;
         public static UISystem Instance
         {
@@ -73,6 +74,70 @@ namespace LansUILib
                 // Test UI
                 if (HasParameter("-uidebug"))
                 {
+                    PanelSettings panelSettings = new PanelSettings();
+                    panelSettings.SetAnchor(AnchorPosition.TopLeft);
+                    panelSettings.SetSize(250, 250, 400, 400);
+                    var panel = UIFactory.CreatePanel("Unlimited Pets Main", panelSettings, true, false);
+
+                    //panel.SetAnchor(LansUILib.ui.AnchorPosition.Center);
+                    //panel.SetSize(-200, -150, 400, 300);
+
+                    var inner = new LComponent("Inner");
+                    inner.isMask = true;
+                    panel.Add(inner);
+
+                    inner.SetMargins(15, 15, 15, 15);
+                    inner.SetLayout(new LayoutFlow(new bool[] { false, false }, new bool[] { true, true }, LayoutFlowType.Vertical, 0, 0, 0, 0, 10));
+
+
+                    inner.Add(UIFactory.CreateText("Summon panel (Show with pet ui)", true));
+                    inner.Add(UIFactory.CreateText("For summon order check description", true));
+
+                    inner.Add(UIFactory.CreateText($"Current Minion Slots: 0", true));
+                    inner.Add(UIFactory.CreateText($"Max Minion Slots: 0", true));
+
+                    var scrollpanel = UIFactory.CreateScrollPanel();
+                    scrollpanel.wrapper.GetLayout().Flex = 1;
+
+                    //var recipePanel = LansUILib.UIFactory.CreatePanel("Recipe Panel", false, false);
+                    var scrollContentPanel = scrollpanel.contentPanel;
+                    scrollContentPanel.SetLayout(new LayoutFlow(new bool[] { true, true }, new bool[] { false, false }, LayoutFlowType.Vertical, 0, 0, 0, 0, 10));
+                    inner.Add(scrollpanel.wrapper);
+
+
+                    for(var i=0; i<19; i++)
+                    {
+                        var recipePanelCurr = UIFactory.CreatePanel("Recipe Panel Current", false, false);
+                        recipePanelCurr.MouseInteraction = false;
+                        recipePanelCurr.SetLayout(new LayoutFlow(new bool[] { true, true }, new bool[] { false, true }, LayoutFlowType.Horizontal, 3, 3, 3, 3, 5));
+
+                        
+                        recipePanelCurr.Add(UIFactory.CreateText($"slot{i}", true));
+                        var minusButton = UIFactory.CreateButton("-1");
+                        minusButton.Panel.SetLayout(new LayoutSize(30, 30));
+                        minusButton.OnClicked += delegate (MouseState state)
+                        {
+                        };
+                        recipePanelCurr.Add(minusButton.Panel);
+                        var plusButton = UIFactory.CreateButton("+1");
+                        plusButton.Panel.SetLayout(new LayoutSize(30, 30));
+                        plusButton.OnClicked += delegate (MouseState state)
+                        {
+                        };
+                        recipePanelCurr.Add(plusButton.Panel);
+                        var fillButton = UIFactory.CreateButton("Fill");
+                        fillButton.Panel.SetLayout(new LayoutSize(60, 30));
+                        fillButton.OnClicked += delegate (MouseState state)
+                        {
+                        };
+                        recipePanelCurr.Add(fillButton.Panel);
+
+                        scrollContentPanel.Add(recipePanelCurr);
+                    }
+
+                    inner.Add(UIFactory.CreateText($"Test 222", true));
+
+                    /*
                     var panel = UIFactory.CreatePanel("Main panel");
                     panel.SetAnchor(AnchorPosition.TopLeft);
                     panel.SetSize(100, 100, 200, 200);
@@ -96,7 +161,7 @@ namespace LansUILib
                     button.Panel.SetMargins(10, 10, 10, 10);
 
                     panel.Add(button.Panel);
-
+                    */
                     Screen.Add(panel);
                 }
 
@@ -107,11 +172,14 @@ namespace LansUILib
                 };
 
 
-
-                Terraria.IL_Main.DrawCursor += AddCursorHandlerDrawCursor;
-                Terraria.IL_Main.DrawThickCursor += AddCursorHandlerDrawThickCursor;
-                //IL.Terraria.Main.DrawInventory += StartOfInterfaces;
-                Terraria.UI.IL_GameInterfaceLayer.Draw += StartOfInterfaces;
+                if (!ilhookscreated)
+                {
+                    ilhookscreated = true;
+                    Terraria.IL_Main.DrawCursor += AddCursorHandlerDrawCursor;
+                    Terraria.IL_Main.DrawThickCursor += AddCursorHandlerDrawThickCursor;
+                    //IL.Terraria.Main.DrawInventory += StartOfInterfaces;
+                    Terraria.UI.IL_GameInterfaceLayer.Draw += StartOfInterfaces;
+                }
             }
 
         }

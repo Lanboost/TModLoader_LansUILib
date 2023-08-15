@@ -53,9 +53,7 @@ namespace LansUILib.ui
         public static int MaxY = 3;
         public static int SIDE_COUNT = 4;
 
-        protected float[] anchor = new float[] {0,0,1,1};
-        protected int[] margin = new int[SIDE_COUNT];
-        protected float[] pivot = new float[2] {0.5f,0.5f};
+        protected PanelSettings panelSettings;
 
         protected List<LComponent> children = new List<LComponent>();
 
@@ -69,10 +67,16 @@ namespace LansUILib.ui
         protected LComponent _parent = null;
         public string name;
 
-        public LComponent(string name)
+        public LComponent(string name, PanelSettings settings = null)
         {
             SetLayout(Layout.None());
             this.name = name;
+            this.panelSettings = settings;
+            if(this.panelSettings == null)
+            {
+                this.panelSettings = new PanelSettings();
+            }
+            
         }
 
         public LComponent Parent
@@ -111,27 +115,24 @@ namespace LansUILib.ui
 
         public virtual void SetMargin(int side, int value)
         {
-            margin[side] = value;
+            panelSettings.SetMargin(side, value);
 
             this.GetLayout().SetDirty();
         }
 
         public virtual int GetMargin(int side)
         {
-            return margin[side];
+            return panelSettings.GetMargin(side);
         }
 
         public virtual float GetPivot(int side)
         {
-            return pivot[side];
+            return panelSettings.GetPivot(side);
         }
 
         public virtual void SetMargins(int minX, int minY, int maxX, int maxY)
         {
-            margin[MinX] = minX;
-            margin[MinY] = minY;
-            margin[MaxX] = maxX;
-            margin[MaxY] = maxY;
+            panelSettings.SetMargins(minX, minY, maxX, maxY);
 
             this.GetLayout().SetDirty();
         }
@@ -149,153 +150,49 @@ namespace LansUILib.ui
 
         public virtual void SetAnchor(int side, float value)
         {
-            if(value < 0 || value > 1)
-            {
-                throw new Exception("Value range is 0-1");
-            }
-            anchor[side] = value;
+            panelSettings.SetAnchor(side, value);
 
             this.GetLayout().SetDirty();
         }
 
         public virtual void SetAnchors(float minX, float minY, float maxX, float maxY)
         {
-            anchor[MinX] = minX;
-            anchor[MinY] = minY;
-            anchor[MaxX] = maxX;
-            anchor[MaxY] = maxY;
+            panelSettings.SetAnchors(minX, minY, maxX, maxY);
 
             this.GetLayout().SetDirty();
         }
 
         public virtual float GetAnchor(int side)
         {
-            return anchor[side];
+            return panelSettings.GetAnchor(side);
         }
 
         public virtual void SetAnchor(AnchorPosition anchorPosition, bool movePivot = true)
         {
-            if(anchorPosition == AnchorPosition.TopLeft)
-            {
-                SetAnchors(0,0,0,0);
-                if(movePivot)
-                {
-                    pivot = new float[] { 0, 0 };
-                }
-            }
-            else if (anchorPosition == AnchorPosition.TopCenter)
-            {
-                SetAnchors(0.5f, 0, 0.5f, 0);
-                if (movePivot)
-                {
-                    pivot = new float[] { 0.5f, 0 };
-                }
-            }
-            else if (anchorPosition == AnchorPosition.TopRight)
-            {
-                SetAnchors(1f, 0, 1f, 0);
-                if (movePivot)
-                {
-                    pivot = new float[] { 1f, 0 };
-                }
-            }
-            else if (anchorPosition == AnchorPosition.RightCenter)
-            {
-                SetAnchors(1f, 0.5f, 1f, 0.5f);
-                if (movePivot)
-                {
-                    pivot = new float[] { 1f, 0.5f };
-                }
-            }
-            else if (anchorPosition == AnchorPosition.BottomRight)
-            {
-                SetAnchors(1f, 1f, 1f, 1f);
-                if (movePivot)
-                {
-                    pivot = new float[] { 1f, 1f };
-                }
-            }
-            else if (anchorPosition == AnchorPosition.BottomCenter)
-            {
-                SetAnchors(0.5f, 1f, 0.5f, 1f);
-                if (movePivot)
-                {
-                    pivot = new float[] { 0.5f, 1f };
-                }
-            }
-            else if (anchorPosition == AnchorPosition.BottomLeft)
-            {
-                SetAnchors(0f, 1f, 0f, 1f);
-                if (movePivot)
-                {
-                    pivot = new float[] { 0f, 1f };
-                }
-            }
-            else if (anchorPosition == AnchorPosition.LeftCenter)
-            {
-                SetAnchors(0f, 0.5f, 0f, 0.5f);
-                if (movePivot)
-                {
-                    pivot = new float[] { 0f, 0.5f };
-                }
-            }
-            else if (anchorPosition == AnchorPosition.Center)
-            {
-                SetAnchors(0.5f, 0.5f, 0.5f, 0.5f);
-                if (movePivot)
-                {
-                    pivot = new float[] { 0.5f, 0.5f };
-                }
-            }
-            else if (anchorPosition == AnchorPosition.ExpandToParent)
-            {
-                SetAnchors(0, 0, 1, 1);
-            }
+            panelSettings.SetAnchor(anchorPosition, movePivot);
         }
 
         public virtual void SetMargin(int minX, int minY, int maxX, int maxY)
         {
-            margin[MinX] = minX;
-            margin[MinY] = minY;
-            margin[MaxX] = maxX;
-            margin[MaxY] = maxY;
+            panelSettings.SetMargin(minX, minY, maxX, maxY);
 
             this.GetLayout().SetDirty();
         }
 
         public virtual void SetSize(int x, int y, int width, int height)
         {
-            if (anchor[MinX] != anchor[MaxX] || anchor[MinY] != anchor[MaxY])
-            {
-                throw new Exception("Size only works correctly if you have anchored to the same (MinX/MaxX and MinY/MaxY). Set that first!");
-            }
-
-            margin[MinX] = x;
-            margin[MinY] = y;
-            margin[MaxX] = -x-width;
-            margin[MaxY] = -y-height;
-
+            panelSettings.SetSize(x, y, width, height);
             this.GetLayout().SetDirty();
         }
 
         public virtual int[] GetSize()
         {
-            if (anchor[MinX] != anchor[MaxX] || anchor[MinY] != anchor[MaxY])
-            {
-                throw new Exception("Size only works correctly if you have anchored to the same (MinX/MaxX and MinY/MaxY). Set that first!");
-            }
-
-            var x = margin[MinX];
-            var y = margin[MinY];
-            var width = -margin[MaxX]-x;
-            var height = -margin[MaxY]-y;
-
-            return new int[] { x, y, width, height };
+            return panelSettings.GetSize();
         }
 
         public virtual void Move(int deltaX, int deltaY, bool safe = true)
         {
-            if (anchor[MinX] != anchor[MaxX] || anchor[MinY] != anchor[MaxY])
+            if (panelSettings.anchor[MinX] != panelSettings.anchor[MaxX] || panelSettings.anchor[MinY] != panelSettings.anchor[MaxY])
             {
                 throw new Exception("Size only works correctly if you have anchored to the same (MinX/MaxX and MinY/MaxY). Set that first!");
             }
@@ -332,10 +229,10 @@ namespace LansUILib.ui
             }
 
 
-            margin[MinX] = margin[MinX] + deltaX;
-            margin[MinY] = margin[MinY] + deltaY;
-            margin[MaxX] = margin[MaxX] - deltaX;
-            margin[MaxY] = margin[MaxY] - deltaY;
+            panelSettings.margin[MinX] = panelSettings.margin[MinX] + deltaX;
+            panelSettings.margin[MinY] = panelSettings.margin[MinY] + deltaY;
+            panelSettings.margin[MaxX] = panelSettings.margin[MaxX] - deltaX;
+            panelSettings.margin[MaxY] = panelSettings.margin[MaxY] - deltaY;
 
 
             this.GetLayout().SetDirty();
@@ -343,7 +240,7 @@ namespace LansUILib.ui
 
         public virtual void Resize(int deltaX, int deltaY, bool safe = true)
         {
-            if (anchor[MinX] != anchor[MaxX] || anchor[MinY] != anchor[MaxY])
+            if (panelSettings.anchor[MinX] != panelSettings.anchor[MaxX] || panelSettings.anchor[MinY] != panelSettings.anchor[MaxY])
             {
                 throw new Exception("Size only works correctly if you have anchored to the same (MinX/MaxX and MinY/MaxY). Set that first!");
             }
@@ -360,10 +257,10 @@ namespace LansUILib.ui
                 }
             }
 
-            margin[MinX] = margin[MinX];
-            margin[MinY] = margin[MinY];
-            margin[MaxX] = margin[MaxX] - deltaX;
-            margin[MaxY] = margin[MaxY] - deltaY;
+            panelSettings.margin[MinX] = panelSettings.margin[MinX];
+            panelSettings.margin[MinY] = panelSettings.margin[MinY];
+            panelSettings.margin[MaxX] = panelSettings.margin[MaxX] - deltaX;
+            panelSettings.margin[MaxY] = panelSettings.margin[MaxY] - deltaY;
 
             this.GetLayout().SetDirty();
         }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Xna.Framework;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -47,6 +48,7 @@ namespace LansUILib.ui.components
         public ILSprite Sprite;
         public ImageFillMode FillMode;
         public CornerBox CornerBox;
+        public Nullable<Vector2> MaxSize;
 
         public LImage(ILColor color, ILSprite sprite, CornerBox cornerBox)
         {
@@ -56,11 +58,12 @@ namespace LansUILib.ui.components
             FillMode = ImageFillMode.CornerBox;
         }
 
-        public LImage(ILColor color, ILSprite sprite, ImageFillMode fillMode = ImageFillMode.Stretch)
+        public LImage(ILColor color, ILSprite sprite, ImageFillMode fillMode = ImageFillMode.Stretch, Nullable<Vector2> maxSize = null)
         {
             Color = color;
             Sprite = sprite;
             FillMode = fillMode;
+            MaxSize = maxSize;
         }
     }
 }

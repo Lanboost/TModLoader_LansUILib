@@ -160,11 +160,11 @@ namespace LansUILib.ui
 				if (cColumn == columnWidth.Length - 1)
 				{
 					cx = padding[0] + this.X;
-					cy += rowHeight[cRow] + spacing;
+					cy += c.GetLayout().Height + spacing;
 				}
 				else
 				{
-					cx += columnWidth[cColumn] + spacing;
+					cx += c.GetLayout().Width + spacing;
 				}
 
                 index++;

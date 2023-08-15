@@ -359,11 +359,28 @@ namespace LansUILib.ui
                     offsets = image.Sprite.GetCurrentAnimationOffset();
                     textureHeight = textureHeight - offsets.Top - offsets.Bottom;
                 }
-                var offsetX = component.GetLayout().X + (component.GetLayout().Width - textureWidth) / 2;
-                var offsetY = component.GetLayout().Y + (component.GetLayout().Height - textureHeight) / 2;
+
+                float scale = 1.0f;
+                if (image.MaxSize != null)
+                {
+                    if (textureWidth > image.MaxSize.Value.X)
+                    {
+                        scale = Math.Min(scale, image.MaxSize.Value.X / textureWidth);
+                    }
+                    if (textureHeight > image.MaxSize.Value.Y)
+                    {
+                        scale = Math.Min(scale, image.MaxSize.Value.Y / textureHeight);
+                    }
+                }
+                var scaledTextureWidth = (int)(textureWidth * scale);
+                var scaledTextureHeight = (int) (textureHeight * scale);
+
+
+                var offsetX = component.GetLayout().X + (component.GetLayout().Width - scaledTextureWidth) / 2;
+                var offsetY = component.GetLayout().Y + (component.GetLayout().Height - scaledTextureHeight) / 2;
                 
                 spriteBatch.Draw(textureAsset.Value,
-                    new Rectangle(offsetX, offsetY, textureWidth, textureHeight),
+                    new Rectangle(offsetX, offsetY, scaledTextureWidth, scaledTextureHeight),
                     new Rectangle(offsets.Left, offsets.Top, textureWidth, textureHeight)
                 , color);
                 

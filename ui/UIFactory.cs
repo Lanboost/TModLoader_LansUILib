@@ -40,21 +40,20 @@ namespace LansUILib
                 UISystem.Instance.ClearCursor();
             };
         }
-        public static LComponent CreatePanel(string name, bool draggable = true, bool resizeable = true)
+
+        public static LComponent CreatePanel(string name, PanelSettings settings, bool draggable = true, bool resizeable = true)
         {
-            var panel = new LComponent(name);
+            var panel = new LComponent(name, settings);
             panel.MouseInteraction = true;
             var backgroundTexture = ModContent.Request<Texture2D>("Terraria/Images/UI/PanelBackground", AssetRequestMode.ImmediateLoad);
             panel.image = new LImage(new WrapperLColor(new Color(63, 82, 151) * 0.7f), new WrapperLSprite(backgroundTexture), new CornerBox(12, 12, 12, 12));
             var borderTexture = ModContent.Request<Texture2D>("Terraria/Images/UI/PanelBorder", AssetRequestMode.ImmediateLoad);
             panel.border = new LImage(new WrapperLColor(Color.Black), new WrapperLSprite(borderTexture), new CornerBox(12, 12, 12, 12));
 
-            
-            
             if (draggable)
             {
                 var dragging = false;
-                panel.MouseDown += delegate (MouseState state){ dragging = true; };
+                panel.MouseDown += delegate (MouseState state) { dragging = true; };
 
                 panel.MouseUp += delegate (MouseState state) { dragging = false; };
 
@@ -75,7 +74,6 @@ namespace LansUILib
                     var resize = new LComponent(name + "resize1");
                     resize.MouseInteraction = true;
                     resize.SetAnchors(0, 0, 1, 0);
-                    resize.SetMargins(10, 0, 10, -10);
                     resize.border = new LImage(new WrapperLColor(Color.Black), new WrapperLSprite(borderTexture), new CornerBox(12, 12, 12, 12));
 
                     var dragging = false;
@@ -165,6 +163,16 @@ namespace LansUILib
             return panel;
         }
 
+        public static LComponent CreatePanel(string name, bool draggable = true, bool resizeable = true)
+        {
+            return CreatePanel(name, null, draggable, resizeable);
+        }
+
+        public static LComponent CreatePanel(string name)
+        {
+            return CreatePanel(name, null, false, false);
+        }
+
         public static ScrollPanel CreateScrollPanel()
         {
             var panel = new LComponent("ScrollPanel");
@@ -231,7 +239,7 @@ namespace LansUILib
 
         public static LButton CreateButton(string buttonText)
         {
-            var panel = CreatePanel("Button", false, false);
+            var panel = CreatePanel("Button");
             panel.MouseInteraction = true;
             var text = CreateText(buttonText);
             panel.Add(text);
@@ -329,12 +337,12 @@ namespace LansUILib
             return wrapper;
         }
         */
-        public static LComponent CreateItemSlot(LItemSlot lItemSlot)
+        public static LComponent CreateItemSlot(LItemSlot lItemSlot, Func<Item, bool> acceptItem = null)
         {
             
-            var panel = CreatePanel("ItemSlot", false, false);
+            var panel = CreatePanel("ItemSlot");
             panel.MouseInteraction = true;
-            panel.SetLayout(new LayoutSize(32, 32));
+            panel.SetLayout(new LayoutSize(36, 36));
             var itemSprite = new LComponent("ItemSlotSprite");
 
             var updateItemSprite = delegate ()
@@ -342,7 +350,7 @@ namespace LansUILib
                 if (lItemSlot.Item.type > ItemID.None)
                 {
                     itemSprite.image = new LImage(new WrapperLColor(Color.White), 
-                        new WrapperLSprite(TextureAssets.Item[lItemSlot.Item.type], Main.itemAnimations[lItemSlot.Item.type]), ImageFillMode.Normal);
+                        new WrapperLSprite(TextureAssets.Item[lItemSlot.Item.type], Main.itemAnimations[lItemSlot.Item.type]), ImageFillMode.Normal, new Vector2(32, 32));
                 }
                 else
                 {
@@ -363,17 +371,24 @@ namespace LansUILib
                 if (!Main.mouseItem.IsAir)
                 {
                     var error = false;
-                    if (lItemSlot.type == LItemSlotType.PetAndLight && !Main.vanityPet[Main.mouseItem.buffType] && !Main.lightPet[Main.mouseItem.buffType])
+                    if (acceptItem == null)
                     {
-                        error = true;
+                        if (lItemSlot.type == LItemSlotType.PetAndLight && !Main.vanityPet[Main.mouseItem.buffType] && !Main.lightPet[Main.mouseItem.buffType])
+                        {
+                            error = true;
+                        }
+                        if (lItemSlot.type == LItemSlotType.Pet && !Main.vanityPet[Main.mouseItem.buffType])
+                        {
+                            error = true;
+                        }
+                        if (lItemSlot.type == LItemSlotType.Light && !Main.lightPet[Main.mouseItem.buffType])
+                        {
+                            error = true;
+                        }
                     }
-                    if (lItemSlot.type == LItemSlotType.Pet && !Main.vanityPet[Main.mouseItem.buffType])
+                    else
                     {
-                        error = true;
-                    }
-                    if (lItemSlot.type == LItemSlotType.Light && !Main.lightPet[Main.mouseItem.buffType])
-                    {
-                        error = true;
+                        error = !acceptItem(Main.mouseItem);
                     }
 
                     if (error)

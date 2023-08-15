@@ -3,7 +3,7 @@
     "Terraria": {
       "commandName": "Executable",
       "executablePath": "dotnet",
-      "commandLineArgs": "$(tMLPath) -skipselect",
+      "commandLineArgs": "$(tMLPath) -skipselect -uidebug",
       "workingDirectory": "$(tMLSteamPath)"
     },
     "TerrariaServer": {
