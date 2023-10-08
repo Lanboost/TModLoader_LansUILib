@@ -74,7 +74,7 @@ namespace LansUILib
                     var resize = new LComponent(name + "resize1");
                     resize.MouseInteraction = true;
                     resize.SetAnchors(0, 0, 1, 0);
-                    resize.border = new LImage(new WrapperLColor(Color.Black), new WrapperLSprite(borderTexture), new CornerBox(12, 12, 12, 12));
+                    //resize.border = new LImage(new WrapperLColor(Color.Black), new WrapperLSprite(borderTexture), new CornerBox(12, 12, 12, 12));
 
                     var dragging = false;
                     resize.MouseDown += delegate (MouseState state) { dragging = true; };
@@ -99,7 +99,7 @@ namespace LansUILib
                     resize.MouseInteraction = true;
                     resize.SetAnchors(0, 1, 1, 1);
                     resize.SetMargins(10, -10, 10, 0);
-                    resize.border = new LImage(new WrapperLColor(Color.Black), new WrapperLSprite(borderTexture), new CornerBox(12, 12, 12, 12));
+                    //resize.border = new LImage(new WrapperLColor(Color.Black), new WrapperLSprite(borderTexture), new CornerBox(12, 12, 12, 12));
                     var dragging = false;
                     resize.MouseDown += delegate (MouseState state) { dragging = true; };
                     resize.MouseUp += delegate (MouseState state) { dragging = false; };
@@ -120,7 +120,7 @@ namespace LansUILib
                     resize.MouseInteraction = true;
                     resize.SetAnchors(0, 0, 0, 1);
                     resize.SetMargins(0, 10, -10, 10);
-                    resize.border = new LImage(new WrapperLColor(Color.Black), new WrapperLSprite(borderTexture), new CornerBox(12, 12, 12, 12));
+                    //resize.border = new LImage(new WrapperLColor(Color.Black), new WrapperLSprite(borderTexture), new CornerBox(12, 12, 12, 12));
                     var dragging = false;
                     resize.MouseDown += delegate (MouseState state) { dragging = true; };
                     resize.MouseUp += delegate (MouseState state) { dragging = false; };
@@ -142,7 +142,7 @@ namespace LansUILib
                     resize.MouseInteraction = true;
                     resize.SetAnchors(1, 0, 1, 1);
                     resize.SetMargins(-10, 10, 0, 10);
-                    resize.border = new LImage(new WrapperLColor(Color.Black), new WrapperLSprite(borderTexture), new CornerBox(12, 12, 12, 12));
+                    //resize.border = new LImage(new WrapperLColor(Color.Black), new WrapperLSprite(borderTexture), new CornerBox(12, 12, 12, 12));
                     var dragging = false;
                     resize.MouseDown += delegate (MouseState state) { dragging = true; };
                     resize.MouseUp += delegate (MouseState state) { dragging = false; };
